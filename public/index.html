@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bodega CDG</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0f2f5;--s:#fff;--b:#e1e5eb;--b2:#c5cdd8;
+  --t:#0f1923;--m:#4a5568;--h:#8a9ab0;
+  --blue:#1a56db;--blue-lt:#ebf3ff;--blue-bd:#93c5fd;
+  --green:#166534;--green-lt:#dcfce7;--green-bd:#86efac;
+  --red:#9b1c1c;--red-lt:#fee2e2;--red-bd:#fca5a5;
+  --amber:#78350f;--amber-lt:#fef3c7;--amber-bd:#fcd34d;
+  --r:7px;--rl:12px;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.05);
+  --shadow-lg:0 8px 24px rgba(0,0,0,.12);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--t);font-size:13.5px;line-height:1.5;min-height:100vh}
+
+/* ---- TOPBAR ---- */
+.topbar{height:52px;background:#0d1b2a;display:flex;align-items:center;padding:0 22px;position:sticky;top:0;z-index:400;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.tlogo{color:#fff;font-weight:700;font-size:15px;letter-spacing:.2px}
+.tlogo sub{font-size:11px;font-weight:400;opacity:.45;margin-left:6px;letter-spacing:0}
+.tuser{margin-left:auto;background:rgba(255,255,255,.1);color:rgba(255,255,255,.75);font-size:12px;padding:4px 13px;border-radius:20px;border:none;cursor:default;letter-spacing:.2px}
+
+/* ---- VIEWS ---- */
+.view{display:none}.view.active{display:block}
+
+/* ---- MENU ---- */
+.menu-shell{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100vh - 52px);padding:40px 20px;gap:8px}
+.menu-h{font-size:24px;font-weight:700;letter-spacing:-.3px;margin-bottom:4px}
+.menu-s{font-size:13.5px;color:var(--m);margin-bottom:32px}
+.menu-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;width:100%;max-width:800px}
+.mcard{background:var(--s);border:1.5px solid var(--b);border-radius:var(--rl);padding:28px 24px;cursor:pointer;transition:border-color .15s,box-shadow .15s;position:relative;overflow:hidden}
+.mcard::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--blue);opacity:0;transition:opacity .15s}
+.mcard:hover{border-color:var(--blue-bd);box-shadow:var(--shadow-lg)}
+.mcard:hover::before{opacity:1}
+.mc-ico{font-size:32px;margin-bottom:14px}
+.mc-n{font-size:15px;font-weight:600;margin-bottom:5px}
+.mc-d{font-size:12.5px;color:var(--m);line-height:1.55}
+.mc-locked{position:absolute;top:14px;right:14px;font-size:11px;background:var(--amber-lt);color:var(--amber);padding:2px 8px;border-radius:10px;font-weight:600}
+
+/* ---- PAGE HEADER ---- */
+.phdr{background:var(--s);border-bottom:1px solid var(--b);padding:11px 22px;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow)}
+.bbtn{background:none;border:1px solid var(--b2);color:var(--m);border-radius:var(--r);padding:5px 12px;font-size:12px;cursor:pointer;transition:background .12s}
+.bbtn:hover{background:var(--bg)}
+.pname{font-size:15px;font-weight:600}
+.pacts{margin-left:auto;display:flex;gap:8px}
+
+/* ---- TABS ---- */
+.tbar{background:var(--s);border-bottom:1px solid var(--b);display:flex;overflow-x:auto;padding:0 22px;box-shadow:var(--shadow)}
+.tab{padding:12px 16px;font-size:12.5px;font-weight:500;color:var(--m);border:none;background:none;cursor:pointer;border-bottom:2.5px solid transparent;white-space:nowrap;display:flex;align-items:center;gap:6px;transition:color .12s}
+.tab:hover{color:var(--t)}
+.tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+.tnum{font-size:10.5px;font-weight:700;background:var(--bg);color:var(--h);padding:1px 6px;border-radius:9px}
+.tab.active .tnum{background:var(--blue-lt);color:var(--blue)}
+.panel{display:none}.panel.active{display:block}
+
+/* ---- BODY / CARDS ---- */
+.body{padding:20px 22px;max-width:1700px;margin:0 auto}
+.card{background:var(--s);border:1px solid var(--b);border-radius:var(--rl);padding:18px 20px;margin-bottom:14px;box-shadow:var(--shadow)}
+.card-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:11px;border-bottom:1px solid var(--b)}
+.card-title{font-size:13.5px;font-weight:600}
+
+/* ---- FORMS ---- */
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg label{font-size:11px;font-weight:700;color:var(--m);text-transform:uppercase;letter-spacing:.5px}
+input[type=text],input[type=number],input[type=date],select,textarea{padding:8px 10px;border:1px solid var(--b2);border-radius:var(--r);font-size:13px;background:var(--s);color:var(--t);width:100%;transition:border-color .12s,box-shadow .12s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,86,219,.08)}
+input[readonly]{background:var(--bg);color:var(--m);cursor:default}
+.grid{display:grid;gap:12px}
+.g2{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(3,1fr)}
+.ga{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+
+/* ---- BUTTONS ---- */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 15px;border-radius:var(--r);font-size:12.5px;font-weight:500;cursor:pointer;border:1px solid transparent;transition:all .12s;white-space:nowrap;line-height:1.4}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.bp{background:var(--blue);color:#fff;border-color:var(--blue)}.bp:hover:not(:disabled){background:#1344b4}
+.bg2{background:var(--s);color:var(--t);border-color:var(--b2)}.bg2:hover:not(:disabled){background:var(--bg)}
+.bs{background:#16a34a;color:#fff;border-color:#16a34a}.bs:hover:not(:disabled){background:var(--green)}
+.bd{background:#dc2626;color:#fff;border-color:#dc2626}.bd:hover:not(:disabled){background:var(--red)}
+.bw{background:#d97706;color:#fff;border-color:#d97706}
+.sm{padding:5px 10px;font-size:12px}.xs{padding:3px 9px;font-size:11px;border-radius:5px}
+.brow{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+
+/* ---- FILTERS ---- */
+.filters{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:9px 13px;background:var(--s);border:1px solid var(--b);border-radius:var(--r);margin-bottom:13px}
+.filters label{font-size:10.5px;font-weight:700;color:var(--h);text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}
+.filters input,.filters select{padding:5px 9px;border:1px solid var(--b2);border-radius:var(--r);font-size:12px;background:var(--bg);color:var(--t);min-width:110px;max-width:165px}
+
+/* ---- TABLES ---- */
+.tw{overflow-x:auto;border:1px solid var(--b);border-radius:var(--rl);background:var(--s)}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+thead th{background:#f6f8fa;padding:9px 11px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--m);border-bottom:1px solid var(--b);white-space:nowrap}
+tbody td{padding:8px 11px;border-bottom:1px solid var(--b);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:#fafbfd}
+.te{text-align:center;padding:36px;color:var(--h)}
+td input[type=number],td input[type=text]{padding:4px 7px;font-size:12px;width:82px}
+
+/* ---- BADGES ---- */
+.badge{padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600;display:inline-block;line-height:1.6}
+.v-g{background:var(--green-lt);color:var(--green)}
+.v-r{background:var(--red-lt);color:var(--red)}
+.v-a{background:var(--amber-lt);color:var(--amber)}
+.v-b{background:var(--blue-lt);color:var(--blue)}
+.v-n{background:var(--bg);color:var(--m)}
+
+/* ---- PT BANNER ---- */
+.ptb{padding:11px 16px;border-radius:var(--r);display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;border:1px solid}
+.ptb-has{background:var(--blue-lt);border-color:var(--blue-bd)}
+.ptb-no{background:var(--amber-lt);border-color:var(--amber-bd)}
+.pt-code{font-size:15px;font-weight:700;font-family:'SF Mono',Consolas,monospace;letter-spacing:.3px}
+.pt-has{color:#1e40af}.pt-no{color:var(--amber)}
+.pt-meta{font-size:11.5px;color:var(--m);margin-top:2px}
+
+/* ---- ALERTS ---- */
+.alert{padding:10px 14px;border-radius:var(--r);font-size:12.5px;border:1px solid;margin-bottom:12px}
+.al-i{background:var(--blue-lt);color:#1e40af;border-color:var(--blue-bd)}
+.al-s{background:var(--green-lt);color:var(--green);border-color:var(--green-bd)}
+.al-w{background:var(--amber-lt);color:var(--amber);border-color:var(--amber-bd)}
+.al-e{background:var(--red-lt);color:var(--red);border-color:var(--red-bd)}
+
+/* ---- UPLOAD ZONE ---- */
+.uz{border:2px dashed var(--b2);border-radius:var(--rl);padding:28px 20px;text-align:center;cursor:pointer;transition:all .15s;display:block}
+.uz:hover{border-color:var(--blue);background:var(--blue-lt)}
+.uz input{display:none}
+.uz-ico{font-size:28px;margin-bottom:8px}
+.uz-t{font-weight:600;font-size:14px;margin-bottom:4px}
+.uz-s{font-size:12px;color:var(--m)}
+
+/* ---- MODAL ---- */
+.mov{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:900;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)}
+.mov.h{display:none}
+.modal{background:var(--s);border-radius:var(--rl);padding:22px 24px;max-width:520px;width:100%;box-shadow:var(--shadow-lg)}
+.modal-t{font-size:15px;font-weight:600;margin-bottom:14px}
+.modal-f{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;padding-top:13px;border-top:1px solid var(--b)}
+
+/* ---- MISC ---- */
+.btw{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.flex{display:flex;align-items:center;gap:7px}
+.mt12{margin-top:12px}.mb12{margin-bottom:12px}.mt16{margin-top:16px}
+.h{display:none!important}
+.spin{animation:spin .9s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+input[type=checkbox]{width:15px;height:15px;accent-color:var(--blue);cursor:pointer}
+.mono{font-family:'SF Mono',Consolas,monospace;font-size:12px}
+.muted{color:var(--m);font-size:12.5px}
+.dp{color:var(--red);font-weight:600}.dn{color:var(--green);font-weight:600}.dz{color:var(--m)}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="tlogo">Bodega CDG <sub>Sistema de gestion</sub></div>
+  <div class="tuser" id="tuser">auditor1</div>
+</div>
+
+<!-- ===================== VIEW: MENU ===================== -->
+<div class="view active" id="view-menu">
+  <div class="menu-shell">
+    <div class="menu-h">Bodega CDG</div>
+    <div class="menu-s">Selecciona una opcion para continuar</div>
+    <div class="menu-grid">
+
+      <div class="mcard" id="mc-cap">
+        <div class="mc-ico">&#128203;</div>
+        <div class="mc-n">Captura de Tarima</div>
+        <div class="mc-d">Administra licencias bolson y captura tarimas con sus SKUs. Disponible para operadores y auditores.</div>
+      </div>
+
+      <div class="mcard" id="mc-aud">
+        <div class="mc-ico">&#128269;</div>
+        <div class="mc-n">Auditar Sesion</div>
+        <div class="mc-d">Conteo fisico, papel de trabajo, control de manifiestos y generacion de exportables. Solo auditores.</div>
+        <div class="mc-locked" id="mc-aud-lock" style="display:none">Solo auditores</div>
+      </div>
+
+      <div class="mcard" id="mc-cat">
+        <div class="mc-ico">&#127991;</div>
+        <div class="mc-n">Catalogo Barra-SKU</div>
+        <div class="mc-d">Base de datos de codigos de barra y SKUs para autocompletar en toda la aplicacion.</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ===================== VIEW: CAPTURA DE TARIMA ===================== -->
+<div class="view" id="view-cap">
+  <div class="phdr">
+    <button class="bbtn" id="back-cap">Menu</button>
+    <div class="pname">Captura de Tarima</div>
+  </div>
+
+  <!-- Panel admin de licencias bolson -->
+  <div class="body" id="cap-admin">
+    <div class="card">
+      <div class="card-hdr"><span class="card-title">Licencias bolson del dia</span></div>
+      <div class="grid ga mb12" style="align-items:flex-end;">
+        <div class="fg"><label>Codigo (U25-####)</label><input type="text" id="lb-cod" placeholder="U25-0001"></div>
+        <div class="fg"><label>Fecha</label><input type="date" id="lb-fecha"></div>
+        <div><button class="btn bp" id="btn-crear-lb">+ Crear licencia</button></div>
+      </div>
+      <div id="lb-msg" class="mt12"></div>
+    </div>
+
+    <div class="tw">
+      <table>
+        <thead><tr>
+          <th>Licencia bolson</th>
+          <th>Fecha creacion</th>
+          <th>SKUs registrados</th>
+          <th>Acciones</th>
+        </tr></thead>
+        <tbody id="tb-lb"><tr><td colspan="4" class="te">Sin licencias. Crea una arriba.</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Panel captura de datos por licencia bolson -->
+  <div class="body h" id="cap-entrada">
+    <div class="btw mb12">
+      <div>
+        <div style="font-size:15px;font-weight:600;" id="cap-lb-titulo">-</div>
+        <div class="muted" id="cap-lb-sub">-</div>
+      </div>
+      <button class="btn bg2 sm" id="btn-cap-volver">Volver a licencias</button>
+    </div>
+
+    <div class="card">
+      <div class="card-hdr"><span class="card-title">Agregar SKU a tarima</span></div>
+      <div class="grid ga" style="align-items:flex-end;">
+        <div class="fg">
+          <label>Cod. barra (opcional)</label>
+          <input type="text" id="cap-barra" placeholder="Escanear codigo de barra" autocomplete="off">
+        </div>
+        <div class="fg">
+          <label>SKU</label>
+          <input type="text" id="cap-sku" placeholder="Manual o auto desde barra" autocomplete="off">
+        </div>
+        <div class="fg">
+          <label>Descripcion</label>
+          <input type="text" id="cap-desc" placeholder="Auto desde catalogo" readonly>
+        </div>
+        <div class="fg">
+          <label>Cantidad</label>
+          <input type="number" id="cap-qty" min="0" step="1" placeholder="0">
+        </div>
+        <div class="fg">
+          <label>Correlativo tarima</label>
+          <input type="text" id="cap-tarima" placeholder="A01" maxlength="3">
+        </div>
+        <div><button class="btn bp" id="btn-cap-add">+ Agregar</button></div>
+      </div>
+      <div id="cap-add-msg" class="mt12"></div>
+    </div>
+
+    <div class="tw">
+      <table>
+        <thead><tr>
+          <th>Correlativo</th><th>SKU</th><th>Descripcion</th>
+          <th>Cantidad</th><th>Capturado por</th><th>Fecha/Hora</th><th>Accion</th>
+        </tr></thead>
+        <tbody id="tb-cap"><tr><td colspan="7" class="te">Sin registros</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== VIEW: AUDITAR SESION ===================== -->
+<div class="view" id="view-aud">
+  <div class="phdr">
+    <button class="bbtn" id="back-aud">Menu</button>
+    <div class="pname">Auditar Sesion</div>
+  </div>
+
+  <div class="tbar">
+    <button class="tab active" data-tab="tarimas"><span class="tnum">1</span> Tarimas</button>
+    <button class="tab" data-tab="detalle"><span class="tnum">2</span> Detalle</button>
+    <button class="tab" data-tab="teorico"><span class="tnum">3</span> Carga Teorico</button>
+    <button class="tab" data-tab="control"><span class="tnum">4</span> Control de Manifiestos</button>
+    <button class="tab" data-tab="papel"><span class="tnum">5</span> Papel de Trabajo</button>
+  </div>
+
+  <!-- TAB 1: TARIMAS -->
+  <div class="panel active body" data-panel="tarimas">
+    <div class="btw mb12">
+      <div><div style="font-size:15px;font-weight:600;">Tarimas capturadas</div><div class="muted">Vista correlacional de licencias bolson y sus tarimas</div></div>
+      <button class="btn bg2 sm" id="btn-ref-tar">Actualizar</button>
+    </div>
+    <div class="filters">
+      <label>Lic. bolson</label><input type="text" id="ft-lb" placeholder="U25-">
+      <label>Fecha</label><input type="date" id="ft-fecha">
+      <label>Tarima</label><input type="text" id="ft-tar" placeholder="A01">
+      <button class="btn bg2 sm" id="btn-ft-c">X Limpiar</button>
+    </div>
+    <div class="tw">
+      <table>
+        <thead><tr>
+          <th>Licencia bolson</th>
+          <th>Fecha</th>
+          <th>SKUs unicos</th>
+          <th>SKUs auditados</th>
+          <th>Lic. hijas</th>
+          <th>Creado por</th>
+          <th>Correlativo tarima</th>
+          <th>Num. lineas</th>
+          <th>Cant. SKU</th>
+          <th>Operador</th>
+          <th>Accion</th>
+        </tr></thead>
+        <tbody id="tb-tar"><tr><td colspan="11" class="te">Sin datos. Captura tarimas primero.</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TAB 2: DETALLE -->
+  <div class="panel body" data-panel="detalle">
+    <div class="btw mb12">
+      <div>
+        <div style="font-size:15px;font-weight:600;">Detalle por SKU</div>
+        <div class="muted" id="det-sub">Todos los SKUs de las capturas activas</div>
+      </div>
+      <div class="brow">
+        <button class="btn bg2 sm h" id="btn-det-qf">X Quitar filtro tarima</button>
+        <button class="btn bg2 sm" id="btn-ref-det">Actualizar</button>
+      </div>
+    </div>
+    <div class="filters">
+      <label>Lic. bolson</label><input type="text" id="fd-lb" placeholder="U25-">
+      <label>Fecha</label><input type="date" id="fd-fecha">
+      <label>Tarima</label><input type="text" id="fd-tar" placeholder="A01">
+      <label>SKU</label><input type="text" id="fd-sku" placeholder="SKU...">
+      <button class="btn bg2 sm" id="btn-fd-c">X Limpiar</button>
+    </div>
+    <div class="tw">
+      <table>
+        <thead><tr>
+          <th>Lic. bolson</th>
+          <th>Fecha</th>
+          <th>Tarima</th>
+          <th>SKU</th>
+          <th>Descripcion</th>
+          <th>Cant. capturada</th>
+          <th>Fisico s/Auditoria</th>
+          <th>Diferencia</th>
+          <th>Estado</th>
+          <th>Operador</th>
+          <th>Auditado por</th>
+          <th>Accion</th>
+        </tr></thead>
+        <tbody id="tb-det"><tr><td colspan="12" class="te">Sin datos</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TAB 3: CARGA TEORICO -->
+  <div class="panel body" data-panel="teorico">
+    <div class="btw mb12">
+      <div>
+        <div style="font-size:15px;font-weight:600;">Carga Teorico 952</div>
+        <div class="muted">Archivo Excel con existencias de ubicacion 952.006.001 (SKU | Nombre | Cant. 952 | Unidad | Exist. | Disp.)</div>
+      </div>
+    </div>
+    <div class="card">
+      <div id="teo-meta" class="h mb12"></div>
+      <label class="uz" for="inp-teo">
+        <div class="uz-ico">&#128202;</div>
+        <div class="uz-t">Subir Teorico 952</div>
+        <div class="uz-s">Excel .xlsx con columnas: SKU | Nombre | Cant. 952 | Unidad | Exist. | Disp.</div>
+        <input type="file" id="inp-teo" accept=".xlsx,.xls">
+      </label>
+      <div id="teo-prog" class="h mt12"><div class="alert al-i"><span class="spin">o</span> Procesando archivo...</div></div>
+      <div id="teo-msg" class="mt12"></div>
+    </div>
+    <div id="teo-tabla" class="h">
+      <div class="btw mb12">
+        <span style="font-weight:600;">Registros cargados</span>
+        <span class="muted" id="teo-cnt"></span>
+      </div>
+      <div class="tw">
+        <table>
+          <thead><tr><th>SKU</th><th>Nombre</th><th>Cant. 952</th><th>Unidad</th><th>Exist.</th><th>Disp.</th></tr></thead>
+          <tbody id="tb-teo"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: CONTROL DE MANIFIESTOS -->
+  <div class="panel body" data-panel="control">
+    <div class="btw mb12">
+      <div>
+        <div style="font-size:15px;font-weight:600;">Control de Manifiestos</div>
+        <div class="muted">Genera y gestiona Papeles de Trabajo. El manifiesto se exporta desde cada PT.</div>
+      </div>
+      <div class="brow">
+        <button class="btn bp" id="btn-gen-pt">+ Generar PT</button>
+        <button class="btn bg2 sm" id="btn-ref-ctrl">Actualizar</button>
+      </div>
+    </div>
+    <div id="ctrl-msg" class="mb12"></div>
+    <div class="tw">
+      <table id="tabla-ctrl">
+        <thead><tr>
+          <th>Correlativo PT</th>
+          <th>Estado</th>
+          <th>Furgon</th>
+          <th>Placa</th>
+          <th>Marchamo</th>
+          <th>Lic. Hija</th>
+          <th>TR999</th>
+          <th>Observaciones</th>
+          <th>Carga</th>
+          <th>Creador</th>
+          <th>Auditor</th>
+          <th>Colaboradores</th>
+          <th>Acciones</th>
+        </tr></thead>
+        <tbody id="tb-ctrl"><tr><td colspan="13" class="te">Sin papeles de trabajo. Presiona + Generar PT.</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TAB 5: PAPEL DE TRABAJO -->
+  <div class="panel body" data-panel="papel">
+
+    <div id="pp-no-pt" class="ptb ptb-no">
+      <div>
+        <div class="pt-code pt-no">Sin PT seleccionado</div>
+        <div class="pt-meta">Empieza o continua un PT desde la pestana Control de Manifiestos</div>
+      </div>
+      <button class="btn bg2 sm" id="btn-pp-ir-ctrl">Ir a Control</button>
+    </div>
+
+    <div id="pp-con-pt" class="ptb ptb-has h">
+      <div>
+        <div class="pt-code pt-has" id="pp-pt-lbl">-</div>
+        <div class="pt-meta" id="pp-pt-meta">-</div>
+      </div>
+      <button class="btn bg2 sm" id="btn-pp-cambiar">Cambiar PT</button>
+    </div>
+
+    <div id="pp-body" class="h">
+      <!-- Datos del PT seleccionado (solo lectura) -->
+      <div class="card">
+        <div class="card-hdr"><span class="card-title">Datos del Papel de Trabajo</span></div>
+        <div class="grid ga" id="pp-datos" style="pointer-events:none;opacity:.8;"></div>
+      </div>
+
+      <!-- Bloque agregar SKU -->
+      <div class="card">
+        <div class="card-hdr"><span class="card-title">Agregar SKU al papel de trabajo</span></div>
+        <div class="grid ga" style="align-items:flex-end;">
+          <div class="fg">
+            <label>Cod. barra (opcional)</label>
+            <input type="text" id="pp-barra" placeholder="Escanear codigo de barra" autocomplete="off">
+          </div>
+          <div class="fg">
+            <label>SKU</label>
+            <input type="text" id="pp-sku" placeholder="Manual o auto" autocomplete="off">
+          </div>
+          <div class="fg">
+            <label>Descripcion</label>
+            <input type="text" id="pp-desc" placeholder="Auto" readonly>
+          </div>
+          <div class="fg">
+            <label>Fisico s/Auditoria</label>
+            <input type="number" id="pp-fisico" min="0" step="1" placeholder="0">
+          </div>
+          <div class="fg">
+            <label>Tarima</label>
+            <input type="text" id="pp-tarima" placeholder="A01">
+          </div>
+          <div class="fg">
+            <label>Estatus</label>
+            <select id="pp-est">
+              <option value="auditado">Auditado</option>
+              <option value="no_auditado">No Auditado</option>
+            </select>
+          </div>
+          <div><button class="btn bp" id="btn-pp-add">+ Agregar</button></div>
+        </div>
+        <div id="pp-msg" class="mt12"></div>
+      </div>
+
+      <!-- Tabla SKUs del PT -->
+      <div class="tw">
+        <table>
+          <thead><tr>
+            <th>SKU</th>
+            <th>Descripcion</th>
+            <th>Tarima</th>
+            <th>Estatus</th>
+            <th>Origen</th>
+            <th>952</th>
+            <th>Fisico s/Aud.</th>
+            <th>Diferencia</th>
+            <th>Seguimiento</th>
+            <th>Validacion</th>
+            <th>Dif. post-valid.</th>
+            <th>Accion</th>
+          </tr></thead>
+          <tbody id="tb-pp"><tr><td colspan="12" class="te">Agrega el primer SKU arriba</td></tr></tbody>
+        </table>
+      </div>
+
+      <div class="brow mt16">
+        <button class="btn bs" id="btn-pp-fin-m">Finalizar como Manifiesto</button>
+        <button class="btn bg2" id="btn-pp-fin-s">Finalizar como Muestra</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== VIEW: CATALOGO ===================== -->
+<div class="view" id="view-cat">
+  <div class="phdr">
+    <button class="bbtn" id="back-cat">Menu</button>
+    <div class="pname">Catalogo Barra-SKU</div>
+  </div>
+  <div class="body">
+    <div class="card">
+      <div class="card-hdr"><span class="card-title">Base de datos Barra-SKU</span></div>
+      <p class="muted mb12">Fuente de autocompletado para todos los campos de codigo de barra y SKU en la aplicacion. Estructura en Supabase: <strong>sku_catalog</strong>.</p>
+      <label class="uz" for="inp-cat">
+        <div class="uz-ico">&#127991;</div>
+        <div class="uz-t">Cargar catalogo desde Excel</div>
+        <div class="uz-s">.xlsx con columnas: Codigo de barra | SKU | Descripcion</div>
+        <input type="file" id="inp-cat" accept=".xlsx,.xls">
+      </label>
+      <div id="cat-msg" class="mt12"></div>
+    </div>
+    <div class="filters">
+      <label>Buscar</label>
+      <input type="text" id="cat-q" placeholder="Cod. barra, SKU o descripcion" style="max-width:280px;">
+    </div>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Codigo de barra</th><th>SKU</th><th>Descripcion</th></tr></thead>
+        <tbody id="tb-cat"><tr><td colspan="3" class="te">Sin registros. Carga un Excel para comenzar.</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL CONFIRMAR ===================== -->
+<div class="mov h" id="mod-c">
+  <div class="modal">
+    <div class="modal-t" id="mod-c-t">Confirmar</div>
+    <p id="mod-c-m" style="color:var(--m);font-size:13px;line-height:1.6;"></p>
+    <div class="modal-f">
+      <button class="btn bg2" id="btn-c-no">Cancelar</button>
+      <button class="btn bd" id="btn-c-si">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL EDITAR PT ===================== -->
+<div class="mov h" id="mod-ept">
+  <div class="modal" style="max-width:600px;">
+    <div class="modal-t">Editar datos del Papel de Trabajo</div>
+    <input type="hidden" id="ept-id">
+    <div class="grid g3 mb12">
+      <div class="fg"><label>Furgon</label><input type="text" id="ept-fur" placeholder="Numero"></div>
+      <div class="fg"><label>Placa</label><input type="text" id="ept-pla" placeholder="ABC-123"></div>
+      <div class="fg"><label>Marchamo</label><input type="text" id="ept-mar" placeholder="Numero"></div>
+      <div class="fg"><label>Lic. Hija</label><input type="text" id="ept-lh" placeholder="U25-####"></div>
+      <div class="fg"><label>TR999</label><input type="text" id="ept-tr" placeholder="TR999.001.##"></div>
+      <div class="fg"><label>Carga No.</label><input type="text" id="ept-ca" placeholder="Numero de carga"></div>
+    </div>
+    <div class="fg mb12"><label>Observaciones</label><textarea id="ept-ob" rows="2" style="resize:vertical;" placeholder="Texto libre"></textarea></div>
+    <div class="grid g2 mb12">
+      <div class="fg"><label>Auditor</label><input type="text" id="ept-au" placeholder="Nombre del auditor"></div>
+    </div>
+    <div class="modal-f">
+      <button class="btn bg2" id="btn-ept-c">Cancelar</button>
+      <button class="btn bp" id="btn-ept-g">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL SUBIR LICENCIA HIJA WMS ===================== -->
+<div class="mov h" id="mod-wms">
+  <div class="modal">
+    <div class="modal-t">Subir Manifiesto / Licencia Hija WMS</div>
+    <input type="hidden" id="mwms-id">
+    <p class="muted mb12">Sube el Excel de la licencia hija de WMS. Columnas esperadas: Numero | SKU | Nombre | Cant. | Unidad | Origen | Destino</p>
+    <label class="uz" for="inp-wms" style="padding:18px;">
+      <div class="uz-ico">&#128196;</div>
+      <div class="uz-t">Seleccionar Excel WMS</div>
+      <div class="uz-s">.xlsx - Licencia hija WMS</div>
+      <input type="file" id="inp-wms" accept=".xlsx,.xls">
+    </label>
+    <div id="wms-msg" class="mt12"></div>
+    <div class="modal-f"><button class="btn bg2" id="btn-wms-c">Cerrar</button></div>
+  </div>
+</div>
+
+<!-- ===================== MODAL GENERAR MANIFIESTO ===================== -->
+<div class="mov h" id="mod-manif">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-t">Generar Manifiesto</div>
+    <p class="muted mb12">Selecciona el formato de exportacion:</p>
+    <div class="brow mb12">
+      <button class="btn bg2" id="btn-manif-xlsx">Excel (.xlsx)</button>
+      <button class="btn bg2" id="btn-manif-word">Word (.txt)</button>
+      <button class="btn bg2" id="btn-manif-pdf">PDF / Imprimir</button>
+    </div>
+    <div class="modal-f"><button class="btn bg2" id="btn-manif-c">Cerrar</button></div>
+  </div>
+</div>
+<!-- SYNC LOADER -->
+<div id="sync-loader" style="display:none;position:fixed;inset:0;background:rgba(13,27,42,.85);z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:14px;">
+  <div style="color:#fff;font-size:22px;font-weight:700;letter-spacing:.5px;">Bodega CDG</div>
+  <div style="color:rgba(255,255,255,.7);font-size:14px;"><span style="animation:spin .9s linear infinite;display:inline-block;">⟳</span> Conectando con el servidor...</div>
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>
