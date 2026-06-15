@@ -1,6 +1,20 @@
-# Supabase
-SUPABASE_URL=https://vtdajakggfrotsrtaio.supabase.co
-SUPABASE_SERVICE_KEY=TU_SERVICE_ROLE_KEY_AQUI
-
-# Puerto (Render lo pone automáticamente)
-PORT=3000
+{
+  "name": "bodega-cdg-backend",
+  "version": "1.0.0",
+  "description": "Backend para Bodega CDG",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^4.21.2",
+    "multer": "^1.4.5-lts.1",
+    "xlsx": "^0.18.5"
+  }
+}  
