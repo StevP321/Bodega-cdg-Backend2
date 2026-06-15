@@ -1,0 +1,6 @@
+# Supabase
+SUPABASE_URL=https://vtdajakggfrotsrtaio.supabase.co
+SUPABASE_SERVICE_KEY=TU_SERVICE_ROLE_KEY_AQUI
+
+# Puerto (Render lo pone automáticamente)
+PORT=3000
